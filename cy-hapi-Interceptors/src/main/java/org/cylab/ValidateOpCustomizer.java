@@ -15,6 +15,7 @@ import org.hl7.fhir.r4.model.Parameters;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 public class ValidateOpCustomizer {
@@ -112,6 +113,7 @@ public class ValidateOpCustomizer {
         IParser responseParser = getAppropriateParser(requestDetails, isJson);
 
         theServletResponse.setHeader("Content-Type", isJson ? JSON_CONTENT_TYPE : XML_CONTENT_TYPE);
+        theServletResponse.setCharacterEncoding(StandardCharsets.UTF_8.name());
         theServletResponse.getWriter().write(responseParser.encodeResourceToString(outcome));
         theServletResponse.getWriter().flush();
     }
@@ -147,6 +149,7 @@ public class ValidateOpCustomizer {
         IParser parser = getAppropriateParser(theRequestDetails, isJson);
 
         theServletResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        theServletResponse.setCharacterEncoding(StandardCharsets.UTF_8.name());
         theServletResponse.setHeader("Content-Type", isJson ? JSON_CONTENT_TYPE : XML_CONTENT_TYPE);
         theServletResponse.getWriter().write(parser.encodeResourceToString(errorOutcome));
         theServletResponse.getWriter().flush();
