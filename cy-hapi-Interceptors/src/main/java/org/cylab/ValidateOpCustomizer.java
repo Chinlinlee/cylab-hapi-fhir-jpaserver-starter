@@ -42,6 +42,7 @@ public class ValidateOpCustomizer {
 
     private boolean isValidateOperation(ServletRequestDetails theRequestDetails) {
         return theRequestDetails != null &&
+                theRequestDetails.getOperation() != null &&
                 theRequestDetails.getOperation().equals("$validate") &&
                 theRequestDetails.getRequestType() == RequestTypeEnum.POST;
     }
