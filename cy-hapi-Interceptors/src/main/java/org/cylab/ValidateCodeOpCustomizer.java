@@ -90,7 +90,8 @@ public class ValidateCodeOpCustomizer {
                     !url.equals(CommonCodeSystemsTerminologyService.CURRENCIES_VALUESET_URL) &&
                     !url.equals(CommonCodeSystemsTerminologyService.UCUM_VALUESET_URL) &&
                     !url.equals(CommonCodeSystemsTerminologyService.ALL_LANGUAGES_VALUESET_URL) &&
-                    !url.equals(CommonCodeSystemsTerminologyService.USPS_VALUESET_URL)
+                    !url.equals(CommonCodeSystemsTerminologyService.USPS_VALUESET_URL) &&
+                    !isCommonCodeSystemInCompose(theRequestDetails.getFhirContext(), requestParams)
                 ) {
                     // do nothing
                 } else {
@@ -106,6 +107,19 @@ public class ValidateCodeOpCustomizer {
                 theRequestDetails.setServletRequest(modifiableRequest);
             }
         }
+    }
+
+    private static boolean isCommonCodeSystemInCompose(FhirContext ctx, Parameters theRequestParams) {
+        String whereCommonCode = String.format("Parameters.parameter.where(name='valueSet').resource.compose.include.where(system='%s' or system='%s' or system='%s' or system='%s' or system='%s')",
+            CommonCodeSystemsTerminologyService.LANGUAGES_CODESYSTEM_URL,
+            CommonCodeSystemsTerminologyService.MIMETYPES_CODESYSTEM_URL,
+            CommonCodeSystemsTerminologyService.CURRENCIES_CODESYSTEM_URL,
+            CommonCodeSystemsTerminologyService.UCUM_CODESYSTEM_URL,
+            CommonCodeSystemsTerminologyService.USPS_CODESYSTEM_URL
+        );
+        Optional<ValueSet.ConceptSetComponent> systemUrl = ctx.newFhirPath().evaluateFirst(theRequestParams, whereCommonCode, ValueSet.ConceptSetComponent.class);
+
+        return systemUrl.isPresent();
     }
 
     private static void codeSystemValidateCodePreProcess(ServletRequestDetails theRequestDetails, HttpServletRequest theServletRequest) throws IOException {
@@ -194,11 +208,16 @@ public class ValidateCodeOpCustomizer {
 
     private boolean doValidateSingleCode(FhirContext ctx, Optional<CodeType> code, ValueSet valueSet) {
         IFhirPath fhirPath = ctx.newFhirPath();
+        // 正常進到這階段的 code 幾乎都是 common code
+        String whereCommonCode = String.format("ValueSet.compose.include.where(system='%s' or system='%s' or system='%s' or system='%s' or system='%s').system",
+                CommonCodeSystemsTerminologyService.LANGUAGES_CODESYSTEM_URL,
+                CommonCodeSystemsTerminologyService.MIMETYPES_CODESYSTEM_URL,
+                CommonCodeSystemsTerminologyService.CURRENCIES_CODESYSTEM_URL,
+                CommonCodeSystemsTerminologyService.UCUM_CODESYSTEM_URL,
+                CommonCodeSystemsTerminologyService.USPS_CODESYSTEM_URL
+        );
+        Optional<UriType> theSystem = fhirPath.evaluateFirst(valueSet, whereCommonCode, UriType.class);
 
-        valueSet.getCompose().getInclude().get(0).getSystem();
-        Optional<UriType> theSystem = fhirPath.evaluateFirst(valueSet, "ValueSet.compose.include.system", UriType.class);
-
-        System.out.println(theSystem);
 
         if (!code.isPresent() || !theSystem.isPresent()) {
             return false;
