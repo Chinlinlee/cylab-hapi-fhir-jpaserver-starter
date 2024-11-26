@@ -60,7 +60,7 @@ public class ValidateOpCustomizer {
         }
 
         // Parse request and convert to JSON if needed
-        String requestResourceJson = parseRequestToJson(theRequestDetails, requestBody, isJson);
+        String requestResourceJson = new String(requestBody, StandardCharsets.UTF_8);
 
         // Validate using external service
         ValidationResponseResult response = validateResource(requestResourceJson);
@@ -112,10 +112,12 @@ public class ValidateOpCustomizer {
         }
 
         IParser responseParser = getAppropriateParser(requestDetails, isJson);
+        responseParser.setPrettyPrint(true);
+        String outcomeJsonString = responseParser.encodeResourceToString(outcome);
 
         theServletResponse.setHeader("Content-Type", isJson ? JSON_CONTENT_TYPE : XML_CONTENT_TYPE);
         theServletResponse.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        theServletResponse.getWriter().write(responseParser.encodeResourceToString(outcome));
+        theServletResponse.getWriter().write(outcomeJsonString);
         theServletResponse.getWriter().flush();
     }
 
